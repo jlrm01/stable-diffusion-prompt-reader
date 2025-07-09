@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('sd_prompt_reader/resources', 'sd_prompt_reader/resources'), ('venv/lib/site-packages/customtkinter', 'customtkinter')],
+    datas=[('sd_prompt_reader/resources', 'sd_prompt_reader/resources'), ('.venv/lib/site-packages/customtkinter', 'customtkinter')],
     hiddenimports=['sd_prompt_reader'],
     hookspath=['.'],
     hooksconfig={},

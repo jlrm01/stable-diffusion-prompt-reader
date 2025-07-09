@@ -8,6 +8,7 @@ import sys
 from tkinter import PhotoImage, Menu
 
 import pyperclip as pyperclip
+from natsort import os_sorted
 from CTkToolTip import *
 from PIL import Image
 from customtkinter import (
@@ -472,6 +473,14 @@ class App(Tk):
         self.dnd_bind("<<Drop>>", self.display_info)
         self.bind("<Configure>", self.resize_image)
 
+        # bind keyboard events for image navigation
+        self.bind("<Left>", self.previous_image)
+        self.bind("<Right>", self.next_image)
+
+        # variables for image navigation
+        self.directory_images = []
+        self.current_image_index = -1
+
         # update checker
         self.update_checker = UpdateChecker(self.status_bar)
 
@@ -498,6 +507,22 @@ class App(Tk):
 
         # detect suffix and read
         if new_path.suffix.lower() in SUPPORTED_FORMATS:
+            # Update directory images and current image index
+            if self.file_path is None or new_path.parent != self.file_path.parent:
+                # If this is a new directory, refresh the image list
+                self.directory_images = self.get_directory_images(new_path.parent)
+
+            # Find the index of the current image in the directory
+            try:
+                self.current_image_index = self.directory_images.index(new_path)
+            except ValueError:
+                # If the image is not in the list (shouldn't happen), refresh the list
+                self.directory_images = self.get_directory_images(new_path.parent)
+                try:
+                    self.current_image_index = self.directory_images.index(new_path)
+                except ValueError:
+                    # If still not found, reset the index
+                    self.current_image_index = -1
             self.file_path = new_path
             with open(self.file_path, "rb") as f:
                 self.image_data = ImageDataReader(f)
@@ -856,6 +881,35 @@ class App(Tk):
             initialdir=initialdir,
             filetypes=(("image files", "*.png *.jpg *jpeg *.webp"),),
         )
+
+    def get_directory_images(self, directory):
+        """Get all images in a directory sorted by modification date (newest to oldest)"""
+        if not directory or not directory.exists():
+            return []
+
+        images = [
+            image
+            for image in directory.iterdir()
+            if image.is_file() and image.suffix.lower() in SUPPORTED_FORMATS
+        ]
+        # Sort images by modification date (newest to oldest)
+        return sorted(images, key=lambda x: x.stat().st_mtime, reverse=True)
+
+    def previous_image(self, event=None):
+        """Navigate to newer images (Left key)"""
+        if not self.directory_images or self.current_image_index <= 0:
+            return
+
+        self.current_image_index -= 1
+        self.display_info(str(self.directory_images[self.current_image_index]), is_selected=True)
+
+    def next_image(self, event=None):
+        """Navigate to older images (Right key)"""
+        if not self.directory_images or self.current_image_index >= len(self.directory_images) - 1:
+            return
+
+        self.current_image_index += 1
+        self.display_info(str(self.directory_images[self.current_image_index]), is_selected=True)
 
     @staticmethod
     def load_icon(icon_file, size):

@@ -99,6 +99,7 @@ elif platform.system() == "Darwin":
             "charset_normalizer.md__mypyc",
             "PIL.WebPImagePlugin",
             "sd_prompt_reader",
+            "natsort"
         ],
         "packages": ["sd_prompt_reader.resources"],
     }
