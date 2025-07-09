@@ -112,6 +112,7 @@ DEFAULT_GRAY = "#8E8E93"
 ACCESSIBLE_GRAY = ("#6C6C70", "#AEAEB2")
 INACCESSIBLE_GRAY = ("gray60", "gray45")
 EDITABLE = ("gray10", "#DCE4EE")
+LORA_HIGHLIGHT = ("#FF5733", "#FF8C00")  # Orange-red for dark mode, brighter orange for light mode
 BUTTON_HOVER = ("gray86", "gray17")
 TOOLTIP_DELAY = 1.5
 BUTTON_WIDTH_L = 40

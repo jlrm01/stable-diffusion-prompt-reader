@@ -4,10 +4,11 @@ __copyright__ = "Copyright 2023"
 __email__ = "receyuki@gmail.com"
 
 from typing import Union, Tuple, Optional
+import re
 
 from customtkinter import CTkTextbox, CTkFont
 
-from .constants import EDITABLE, ACCESSIBLE_GRAY
+from .constants import EDITABLE, ACCESSIBLE_GRAY, LORA_HIGHLIGHT
 
 
 class STkTextbox(CTkTextbox):
@@ -30,6 +31,8 @@ class STkTextbox(CTkTextbox):
         text: str = "",
         **kwargs
     ):
+        # Regex pattern for lora tags
+        self.lora_pattern = r'<lora:([^:]+):([^>]+)>'
         self._text = text
         self.current_text = text
 
@@ -70,6 +73,10 @@ class STkTextbox(CTkTextbox):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", self._text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(self._text)
+
         self.configure(state="disabled")
 
     def view_vertical(self):
@@ -90,6 +97,10 @@ class STkTextbox(CTkTextbox):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(text)
+
         self.configure(state="disabled")
 
     def view_normal(self):
@@ -97,6 +108,10 @@ class STkTextbox(CTkTextbox):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", self._text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(self._text)
+
         self.configure(state="disabled")
 
     def sort_asc(self):
@@ -104,6 +119,10 @@ class STkTextbox(CTkTextbox):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(text)
+
         self.configure(state="disabled")
 
     def sort_des(self):
@@ -113,12 +132,20 @@ class STkTextbox(CTkTextbox):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(text)
+
         self.configure(state="disabled")
 
     def sort_off(self):
         self.configure(state="normal")
         self.delete("1.0", "end")
         self.insert("end", self.current_text)
+
+        # Apply lora highlighting
+        self._apply_lora_highlighting(self.current_text)
+
         self.configure(state="disabled")
 
     def edit_on(self):
@@ -128,3 +155,16 @@ class STkTextbox(CTkTextbox):
     def edit_off(self):
         self.configure(state="disabled")
         self.configure(text_color=ACCESSIBLE_GRAY)
+
+    def _apply_lora_highlighting(self, text):
+        """Apply highlighting to lora tags in the text"""
+        # Configure tag for lora highlighting
+        self._textbox.tag_configure("lora_highlight", foreground=self._apply_appearance_mode(LORA_HIGHLIGHT))
+
+        # Find and highlight lora patterns: <lora:lora_name:weight>
+        for match in re.finditer(self.lora_pattern, text):
+            start_idx = f"1.0+{match.start()}c"
+            end_idx = f"1.0+{match.end()}c"
+
+            # Highlight the entire lora tag
+            self._textbox.tag_add("lora_highlight", start_idx, end_idx)
