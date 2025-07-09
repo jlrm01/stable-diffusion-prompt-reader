@@ -8,7 +8,7 @@ import re
 
 from customtkinter import CTkTextbox, CTkFont
 
-from .constants import EDITABLE, ACCESSIBLE_GRAY, LORA_HIGHLIGHT
+from .constants import EDITABLE, ACCESSIBLE_GRAY, LORA_TAG_HIGHLIGHT, LORA_NAME_HIGHLIGHT, LORA_WEIGHT_HIGHLIGHT
 
 
 class STkTextbox(CTkTextbox):
@@ -158,13 +158,38 @@ class STkTextbox(CTkTextbox):
 
     def _apply_lora_highlighting(self, text):
         """Apply highlighting to lora tags in the text"""
-        # Configure tag for lora highlighting
-        self._textbox.tag_configure("lora_highlight", foreground=self._apply_appearance_mode(LORA_HIGHLIGHT))
+        # Configure tags for different parts of lora highlighting
+        self._textbox.tag_configure("lora_tag_highlight", foreground=self._apply_appearance_mode(LORA_TAG_HIGHLIGHT))
+        self._textbox.tag_configure("lora_name_highlight", foreground=self._apply_appearance_mode(LORA_NAME_HIGHLIGHT))
+        self._textbox.tag_configure("lora_weight_highlight", foreground=self._apply_appearance_mode(LORA_WEIGHT_HIGHLIGHT))
 
         # Find and highlight lora patterns: <lora:lora_name:weight>
         for match in re.finditer(self.lora_pattern, text):
+            full_match = match.group(0)
+            lora_name = match.group(1)
+            weight = match.group(2)
+
+            # Calculate indices for each part
             start_idx = f"1.0+{match.start()}c"
             end_idx = f"1.0+{match.end()}c"
 
-            # Highlight the entire lora tag
-            self._textbox.tag_add("lora_highlight", start_idx, end_idx)
+            # Calculate indices for lora_name
+            name_start_offset = full_match.find(lora_name)
+            name_start_idx = f"1.0+{match.start() + name_start_offset}c"
+            name_end_idx = f"1.0+{match.start() + name_start_offset + len(lora_name)}c"
+
+            # Calculate indices for weight
+            weight_start_offset = full_match.find(weight)
+            weight_start_idx = f"1.0+{match.start() + weight_start_offset}c"
+            weight_end_idx = f"1.0+{match.start() + weight_start_offset + len(weight)}c"
+
+            # Highlight the tag brackets and colons with tag color
+            self._textbox.tag_add("lora_tag_highlight", start_idx, name_start_idx)  # <lora:
+            self._textbox.tag_add("lora_tag_highlight", name_end_idx, weight_start_idx)  # : between name and weight
+            self._textbox.tag_add("lora_tag_highlight", weight_end_idx, end_idx)  # > at the end
+
+            # Highlight the lora_name with name color
+            self._textbox.tag_add("lora_name_highlight", name_start_idx, name_end_idx)
+
+            # Highlight the weight with weight color
+            self._textbox.tag_add("lora_weight_highlight", weight_start_idx, weight_end_idx)
