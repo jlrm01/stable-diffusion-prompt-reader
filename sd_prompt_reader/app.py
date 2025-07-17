@@ -476,6 +476,7 @@ class App(Tk):
         # bind keyboard events for image navigation
         self.bind("<Left>", self.previous_image)
         self.bind("<Right>", self.next_image)
+        self.bind("<Delete>", self.delete_current_image)
 
         # variables for image navigation
         self.directory_images = []
@@ -910,6 +911,41 @@ class App(Tk):
 
         self.current_image_index += 1
         self.display_info(str(self.directory_images[self.current_image_index]), is_selected=True)
+
+    def delete_current_image(self, event=None):
+        """Delete the current image from filesystem and show the next image (Delete key)"""
+        if not self.directory_images or self.current_image_index < 0 or self.current_image_index >= len(self.directory_images):
+            return
+
+        # Get the current image path
+        current_image_path = self.directory_images[self.current_image_index]
+        
+        try:
+            # Delete the file from filesystem
+            import os
+            os.remove(current_image_path)
+            
+            # Remove the image from the list
+            self.directory_images.pop(self.current_image_index)
+            
+            # Keep the same index after deletion (which will point to the next image)
+            # If we were at the last image, decrement the index
+            if self.current_image_index >= len(self.directory_images):
+                self.current_image_index = len(self.directory_images) - 1 if len(self.directory_images) > 0 else -1
+            
+            # Display the next image or reset if no images left
+            if self.current_image_index >= 0:
+                self.display_info(str(self.directory_images[self.current_image_index]), is_selected=True)
+            else:
+                # Reset the UI when no images are left
+                self.unsupported_format("Image deleted. No more images in directory.", reset_image=True)
+                self.file_path = None
+                self.directory_images = []
+                self.current_image_index = -1
+            
+            self.status_bar.info("Image deleted successfully")
+        except Exception as e:
+            self.status_bar.error(f"Error deleting image: {str(e)}")
 
     @staticmethod
     def load_icon(icon_file, size):
